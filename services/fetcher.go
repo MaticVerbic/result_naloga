@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,7 +40,7 @@ func (f *Fetcher) Fetch(ctx context.Context, numWorker int) (int, []string, int,
 
 		f.Log.WithField("routineCounter", i).Info("starting routine")
 		wg.Add(1)
-		go fetch(fetchInput{url: url, out: out, errCh: errCh, wg: &wg, log: f.Log})
+		go fetch(&fetchInput{url: url, out: out, errCh: errCh, wg: &wg, log: f.Log})
 	}
 
 	wg.Wait()
@@ -75,12 +76,12 @@ type fetchInput struct {
 	log   *logrus.Entry
 }
 
-func fetch(in fetchInput) {
+func fetch(in *fetchInput) {
 	defer in.wg.Done()
 
 	response, err := http.Get(in.url)
 	if err != nil {
-		in.errCh <- err
+		in.errCh <- errors.Wrap(err, "failed to fetch from url")
 		return
 	}
 

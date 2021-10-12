@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -35,8 +34,6 @@ func New() *Config {
 	log := logger(level, viper.GetBool("LOG_FORCE_COLORS"), colors, !colors)
 	urls := viper.GetStringSlice("URLS")
 
-	test := viper.GetStringMapString("TEST")
-	fmt.Println(test)
 	return &Config{
 		Log:  log,
 		URLS: urls,
