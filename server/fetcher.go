@@ -95,7 +95,9 @@ func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.Log.Info("success")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		s.Log.WithField("err", err).Error("failed to write http response")
+	}
 }
 
 // Serve creates HTTP server.
@@ -111,7 +113,9 @@ func (s *Server) Serve() {
 	router.Use(NewCORS())
 
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+		if _, err := w.Write([]byte("pong")); err != nil {
+			s.Log.WithField("err", err).Error("failed to write http response")
+		}
 	})
 
 	router.HandleFunc("/result", s.Result)
