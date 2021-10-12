@@ -9,11 +9,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config ...
 type Config struct {
 	Log  *logrus.Entry
 	URLS []string
 }
 
+// New returns a new Config struct
 func New() *Config {
 	if err := godotenv.Load(); err != nil {
 		panic(errors.Wrap(err, "failed to load env with error"))

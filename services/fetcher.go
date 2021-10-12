@@ -18,6 +18,7 @@ type Fetcher struct {
 	Results []string
 }
 
+// NewFetcher returns a new Fetcher service.
 func NewFetcher(urls []string, log *logrus.Entry) *Fetcher {
 	return &Fetcher{
 		Log:  log,

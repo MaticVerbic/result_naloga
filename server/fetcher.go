@@ -22,14 +22,17 @@ import (
 type key int
 
 const (
+	// LogKey is used to pass logger data via context.
 	LogKey key = iota
 )
 
+// Server ...
 type Server struct {
 	FetcherSvc *services.Fetcher
 	Log        *logrus.Entry
 }
 
+// New returns a new http server ..
 func New(fetcherSvc *services.Fetcher, log *logrus.Entry) *Server {
 	return &Server{
 		FetcherSvc: fetcherSvc,
@@ -37,6 +40,7 @@ func New(fetcherSvc *services.Fetcher, log *logrus.Entry) *Server {
 	}
 }
 
+// Response ...
 type Response struct {
 	SuccessCount    int      `json:"successCount"`
 	ErrorCount      int      `json:"errorCount"`
@@ -44,11 +48,14 @@ type Response struct {
 	ErrorResponse   []error  `json:"errorResponse"`
 }
 
+// Result is a handler function for the main task.
 func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	workers, ok := r.URL.Query()["workers"]
 	if !ok || len(workers[0]) != 1 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid input parameters, workers should be between 1 and 4"))
+		if _, err := w.Write([]byte("Invalid input parameters, workers should be between 1 and 4")); err != nil {
+			s.Log.WithField("err", err).Error("failed to write http response")
+		}
 		return
 	}
 
@@ -57,7 +64,9 @@ func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	numWorkers, err := strconv.Atoi(nw)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 - failed to convert input to integer"))
+		if _, err := w.Write([]byte("500 - failed to convert input to integer")); err != nil {
+			s.Log.WithField("err", err).Error("failed to write http response")
+		}
 	}
 
 	ctx := r.Context()
@@ -80,7 +89,9 @@ func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	b, err := json.MarshalIndent(resp, "", "  ")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 - failed to convert response to json"))
+		if _, err := w.Write([]byte("500 - failed to convert response to json")); err != nil {
+			s.Log.WithField("err", err).Error("failed to write http response")
+		}
 	}
 
 	s.Log.Info("success")
