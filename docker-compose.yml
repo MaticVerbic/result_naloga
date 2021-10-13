@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  api:
+    image: golang:1.15
+    working_dir: /app
+    env_file: .env
+    volumes:
+      - "$GOPATH:/go"
+      - ".:/app"
+    expose:
+      - 80
+    networks:
+      - default
