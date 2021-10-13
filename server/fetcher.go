@@ -140,7 +140,9 @@ func (s *Server) Serve() {
 	router.Get("/docs/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		doc, err := docs.InitSwag()
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("failed to parse json file: %v", err)))
+			if _, err := w.Write([]byte(fmt.Sprintf("failed to parse json file: %v", err))); err != nil {
+				s.Log.WithField("err", err).Error("failed to write http response")
+			}
 		}
 
 		w.Header().Add("Content-Type", "application/json")
