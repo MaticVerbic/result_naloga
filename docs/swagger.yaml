@@ -1,0 +1,53 @@
+basePath: /
+definitions:
+  server.Response:
+    properties:
+      errorCount:
+        type: integer
+      errorResponse:
+        items:
+          type: string
+        type: array
+      successCount:
+        type: integer
+      successResponse:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a test task for result.
+  license:
+    name: none
+  title: Result test task
+  version: "1.0"
+paths:
+  /ping:
+    get:
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: simple healthcheck method
+  /result:
+    get:
+      parameters:
+      - description: number of concurrent workers
+        in: query
+        name: workers
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.Response'
+      summary: fetches data concurrently given the number of workers provided
+swagger: "2.0"

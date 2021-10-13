@@ -1,0 +1,82 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a test task for result.",
+        "title": "Result test task",
+        "contact": {},
+        "license": {
+            "name": "none"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/ping": {
+            "get": {
+                "produces": [
+                    "text/plain"
+                ],
+                "summary": "simple healthcheck method",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/result": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "fetches data concurrently given the number of workers provided",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "number of concurrent workers",
+                        "name": "workers",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.Response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "server.Response": {
+            "type": "object",
+            "properties": {
+                "errorCount": {
+                    "type": "integer"
+                },
+                "errorResponse": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "successCount": {
+                    "type": "integer"
+                },
+                "successResponse": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

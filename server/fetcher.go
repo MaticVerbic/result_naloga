@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"naloga/docs"
 	"naloga/services"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type key int
@@ -45,10 +47,15 @@ type Response struct {
 	SuccessCount    int      `json:"successCount"`
 	ErrorCount      int      `json:"errorCount"`
 	SuccessResponse []string `json:"successResponse"`
-	ErrorResponse   []error  `json:"errorResponse"`
+	ErrorResponse   []string `json:"errorResponse"`
 }
 
 // Result is a handler function for the main task.
+// @Summary fetches data concurrently given the number of workers provided
+// @Produce json
+// @Param workers query int true "number of concurrent workers"
+// @Success 200 {object} Response
+// @Router /result [get]
 func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	workers, ok := r.URL.Query()["workers"]
 	if !ok || len(workers[0]) != 1 {
@@ -79,11 +86,16 @@ func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 
 	successCount, successResponse, errorCount, errorResponse := s.FetcherSvc.Fetch(ctx, numWorkers)
 
+	errResp := []string{}
+	for _, err := range errorResponse {
+		errResp = append(errResp, err.Error())
+	}
+
 	resp := Response{
 		SuccessCount:    successCount,
 		ErrorCount:      errorCount,
 		SuccessResponse: successResponse,
-		ErrorResponse:   errorResponse,
+		ErrorResponse:   errResp,
 	}
 
 	b, err := json.MarshalIndent(resp, "", "  ")
@@ -100,6 +112,17 @@ func (s *Server) Result(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Ping is a healthcheck method
+// @Summary simple healthcheck method
+// @Produce plain
+// @Success 200 string pong
+// @Router /ping [get]
+func (s *Server) Ping(w http.ResponseWriter, r *http.Request) {
+	if _, err := w.Write([]byte("pong")); err != nil {
+		s.Log.WithField("err", err).Error("failed to write http response")
+	}
+}
+
 // Serve creates HTTP server.
 // It also catches different SIG__ signals.
 func (s *Server) Serve() {
@@ -112,12 +135,21 @@ func (s *Server) Serve() {
 	router.Use(HTTPLog)
 	router.Use(NewCORS())
 
-	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("pong")); err != nil {
+	router.HandleFunc("/ping", s.Ping)
+
+	router.Get("/docs/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		doc, err := docs.InitSwag()
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("failed to parse json file: %v", err)))
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		if _, err := w.Write(doc); err != nil {
 			s.Log.WithField("err", err).Error("failed to write http response")
 		}
 	})
 
+	router.Get("/docs/swagger/*", httpSwagger.Handler(httpSwagger.URL("swagger.json")))
 	router.HandleFunc("/result", s.Result)
 
 	errChan := make(chan error, 1)
